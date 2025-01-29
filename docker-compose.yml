@@ -1,4 +1,59 @@
 version: "3.8"
+networks:
+  zabbix-net:
+      name: zabbix-net
+      attachable: true
+      driver: overlay
+      driver_opts:
+        com.docker.network.driver.mtu: 1400
+      ipam:
+        config:
+          - subnet: 10.50.10.0/24
+  management-net:
+      name: management-net
+      attachable: true
+      driver: overlay
+      driver_opts:
+        com.docker.network.driver.mtu: 1400
+      ipam:
+        config:
+          - subnet: 10.50.50.0/24
+  db-net:
+      name: db-net
+      attachable: true
+      driver: overlay
+      driver_opts:
+        com.docker.network.driver.mtu: 1400
+      ipam:
+        config:
+          - subnet: 10.50.30.0/24
+  proxy-net:
+      name: proxy-net
+      attachable: true
+      driver: overlay
+      driver_opts:
+        com.docker.network.driver.mtu: 1400
+      ipam:
+        config:
+          - subnet: 10.50.200.0/24
+  central-net:
+      name: central-net
+      attachable: true
+      driver: overlay
+      driver_opts:
+        com.docker.network.driver.mtu: 1400
+      ipam:
+        config:
+          - subnet: 10.50.100.0/24
+  mx-net:
+      name: mx-net
+      attachable: true
+      driver: overlay
+      driver_opts:
+        com.docker.network.driver.mtu: 1400
+      ipam:
+        config:
+          - subnet: 10.50.40.0/24
 
 services:
   mail:
@@ -17,7 +72,7 @@ services:
       # ? if SELinux is enabled, uncomment the line below and comment the line above
       # - ./config/:/tmp/docker-mailserver/${SELINUX_LABEL}
     networks:
-      - mailserver
+      - mx-net
     ports:
       - "25:25" # SMTP  (explicit TLS => STARTTLS)
       - "143:143" # IMAP4 (explicit TLS => STARTTLS)
@@ -65,9 +120,9 @@ services:
     image: mysql:5.7
     volumes:
       # - ./mysql:/docker-entrypoint-initdb.d
-      - sqldata:/var/lib/mysql
+      - ./sqldata:/var/lib/mysql
     networks:
-      - mailserver
+      - db-net
     expose:
       - "3306"
     environment:
@@ -83,7 +138,8 @@ services:
       - postfixdb
       - mail
     networks:
-      - mailserver
+      - mx-net
+      - db-net
     ports:
       - 8080:80
     environment:
@@ -105,7 +161,7 @@ services:
     image: monogramm/autodiscover-email-settings:latest
     container_name: AutoDiscover
     networks:
-      - mailserver
+      - mx-net
     environment:
       COMPANY_NAME: ${COMPANY_NAME}
       SUPPORT_URL: https://autodiscover.${DOMAINNAME}
@@ -144,7 +200,7 @@ services:
       - "--certificatesResolvers.myresolver.acme.email=postmaster@${DOMAINNAME}"
       - "--certificatesResolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     networks:
-      - mailserver
+      - mx-net
     ports:
       - "80:80"
       - "443:443"
@@ -159,11 +215,4 @@ services:
     volumes:
       - "./mail/data/letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-networks:
-  mailserver:
-    name: mailserver
-    driver: bridge
-volumes:
-  sqldata:
-    name: SQLData
-    external: false
+

@@ -1,6 +1,6 @@
 FROM node:lts-alpine
 
-LABEL maintainer="Monogramm Maintainers <opensource at monogramm dot io>"
+LABEL maintainer="Sergey Kocharyan <serjplus@gmail.com>"
 
 EXPOSE 8000
 WORKDIR /app
